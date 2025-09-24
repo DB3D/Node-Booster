@@ -101,7 +101,7 @@ class NODEBOOSTER_PT_tool_color_palette(bpy.types.Panel,BrushPanel):
     #so we are hijacking the context for us then.
 
     bl_idname = "NODEBOOSTER_PT_tool_color_palette"
-    bl_label = "Assign Color"
+    bl_label = "Assign Node Color"
     bl_category = "Node Booster"
     bl_space_type = "NODE_EDITOR"
     bl_region_type = "UI"
