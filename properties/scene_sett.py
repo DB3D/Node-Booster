@@ -81,6 +81,10 @@ class NODEBOOSTER_PR_scene(bpy.types.PropertyGroup):
         max=1,
         update=palette_active_upd,
         )
+    palette_assign_ptr: bpy.props.PointerProperty(
+        type=bpy.types.Palette,
+        name="Palette",
+        )
     palette_old : bpy.props.FloatVectorProperty(
         default=(0,0,0),
         subtype='COLOR',

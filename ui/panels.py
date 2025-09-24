@@ -116,11 +116,9 @@ class NODEBOOSTER_PT_tool_color_palette(bpy.types.Panel,BrushPanel):
         layout = self.layout
 
         sett_scene = context.scene.nodebooster
-        ts = context.tool_settings
-        tsi = ts.image_paint
-
-        if (not tsi.palette):
-            layout.operator("nodebooster.initalize_palette",text="Create Palette",icon="ADD",)
+        if (not sett_scene.palette_assign_ptr):
+            op = layout.operator("nodebooster.initalize_palette",text="Create Palette",icon="ADD",)
+            op.set_scn_prop = "palette_assign_ptr"
             return None
 
         row = layout.row(align=True)
@@ -132,7 +130,7 @@ class NODEBOOSTER_PT_tool_color_palette(bpy.types.Panel,BrushPanel):
 
         row.operator("nodebooster.palette_reset_color",text="",icon="LOOP_BACK",)
 
-        layout.template_palette(tsi, "palette", color=True,)
+        layout.template_palette(sett_scene, "palette_assign_ptr", color=True,)
 
         return None 
 

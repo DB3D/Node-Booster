@@ -108,6 +108,11 @@ from . interpolation.spline2dmix import (
 from . interpolation.spline2dmonotonic import (
         NODEBOOSTER_ND_EnsureMonotonicity,
         )
+from . colorpalette import (
+        NODEBOOSTER_NG_GN_ColorPalette,
+        NODEBOOSTER_NG_SH_ColorPalette,
+        NODEBOOSTER_NG_CP_ColorPalette,
+        )
 
 # For menus, in order of appearance
 # NOTE Redudancy. Perhaps menus.py could be refactored to use the _GN_, _SH_, _CP_ notations.
@@ -121,6 +126,7 @@ GN_CustomNodes = (
             NODEBOOSTER_NG_GN_RenderInfo,
             NODEBOOSTER_NG_GN_CameraInfo,
             None, #separator
+            NODEBOOSTER_NG_GN_ColorPalette,
             NODEBOOSTER_NG_GN_ObjectVelocity,
             NODEBOOSTER_NG_GN_IsRenderedView, #this one doesn't make sense in other editors.
             NODEBOOSTER_NG_GN_SequencerSound,
@@ -159,6 +165,7 @@ SH_CustomNodes = (
             NODEBOOSTER_NG_SH_RenderInfo,
             NODEBOOSTER_NG_SH_CameraInfo,
             None, #separator
+            NODEBOOSTER_NG_SH_ColorPalette,
             NODEBOOSTER_NG_SH_ObjectVelocity,
             NODEBOOSTER_NG_SH_SequencerSound,
             None, #separator
@@ -285,6 +292,9 @@ classes = (
     NODEBOOSTER_ND_2DCurvesMix,
     NODEBOOSTER_ND_EnsureMonotonicity,
     NODEBOOSTER_ND_InterpolationLoop,
+    NODEBOOSTER_NG_GN_ColorPalette,
+    NODEBOOSTER_NG_SH_ColorPalette,
+    NODEBOOSTER_NG_CP_ColorPalette,
     )
 
 #for utility. handlers.py module will use this list.

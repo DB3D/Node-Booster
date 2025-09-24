@@ -10,26 +10,9 @@ import bpy
 #NOTE about palettes: https://blender.stackexchange.com/questions/73122/how-do-i-create-palette-ui-object
 
 
-def msgbus_palette_callback(context):
-    """get notified when user is changing a palette color"""
-    
-    pal = bpy.data.palettes.get('.NodeBoosterPalette')
-    if (not pal):
-        return None
-
-    palcol = pal.colors.active
-    if (not palcol):
-        return None
-
-    # Only solution i could find to get the context from a msgbus.
-    # Call operator -> invoke -> get mouse pos -> find back context.space...
-    bpy.ops.nodebooster.setcolor(('INVOKE_DEFAULT'), color=palcol.color)
-    
-    return None
-
 
 def palette_active_upd(self, context):
-    """update when user is changing the scene 'palette_active' property"""
+    """update when user is changing the scene 'palette_active' property, for assigning color to nodes"""
 
     if (context.space_data is None):
         return None
@@ -44,51 +27,74 @@ def palette_active_upd(self, context):
 
     return None
 
+def msgbus_palette_callback(context):
+    """get notified when user is changing a palette color"""
+    
+    # NOTE: msgbus context is very bad, even bpy.context from here is None..
+    # so we use an operator instead.. i don't like this, but there's no choice.
+    # not my fault if most handlers and msgbus context parameters are broken!
+    try:
+        bpy.ops.nodebooster.palette_msg_bus_actions(('INVOKE_DEFAULT'))
+    except Exception as e:
+        print(f"Error updating Color Palette custom nodes: {e}")
 
-class NODEBOOSTER_OT_setcolor(bpy.types.Operator):
+    return None
 
-    bl_idname = "nodebooster.setcolor"
+
+class NODEBOOSTER_OT_palette_msg_bus_actions(bpy.types.Operator):
+
+    bl_idname = "nodebooster.palette_msg_bus_actions"
     bl_label = ""
     bl_options = {'REGISTER'}
 
-    color : bpy.props.FloatVectorProperty(
-        default=(0,0,0),
-        subtype='COLOR',
-        )
-
     def invoke(self, context, event):
-        
         # This operator will be called from a msgbus, and context will be crap
         # So we need to find back the space from mouse
         space = None
+        region = None
         for a in bpy.context.window.screen.areas:
             if (a.x<event.mouse_x<a.x+a.width) and (a.y<event.mouse_y<a.y+a.height):
                 space = a.spaces[0]
+                # Find which region the mouse is in
+                for r in a.regions:
+                    if (r.x<event.mouse_x<r.x+r.width) and (r.y<event.mouse_y<r.y+r.height):
+                        region = r
+                        break
                 break
 
         if (space is None) or (space.type!='NODE_EDITOR'):
-            return {'FINISHED'}
+            print('ERROR: NODEBOOSTER_OT_palette_msg_bus_actions: space invalid')
+            return {'CANCELLED'}
         ng = space.edit_tree
         if (not ng):
-            return {'FINISHED'}
-    
+            print('ERROR: NODEBOOSTER_OT_palette_msg_bus_actions: ng invalid')
+            return {'CANCELLED'}
+
         sett_scene = context.scene.nodebooster
-
-        # Create a nice History
-        sett_scene.palette_older = sett_scene.palette_old
-        sett_scene.palette_old = sett_scene.palette_active
-
-        # Will trigger palette_active_upd
-        sett_scene.palette_active = self.color
-
-        if (sett_scene.frame_sync_color):
-            sett_scene.frame_color = self.color
-
-        for n in [n for n in ng.nodes if (n.select)]:
-            if (not n.use_custom_color):
-                n.use_custom_color = True
-            n.color = self.color
         
+        #panel assignation operator from N panel
+        if (region is not None) or (region.type=='UI'):
+            pal = sett_scene.palette_assign_ptr
+            if (pal):
+                palactive = pal.colors.active
+                if (palactive):
+                    palcol = palactive.color[:]
+                    # Create a nice History
+                    sett_scene.palette_older = sett_scene.palette_old
+                    sett_scene.palette_old = sett_scene.palette_active
+                    # Will trigger palette_active_upd
+                    sett_scene.palette_active = palcol
+                    if (sett_scene.frame_sync_color):
+                        sett_scene.frame_color = palcol
+                    for n in [n for n in ng.nodes if (n.select)]:
+                        if (not n.use_custom_color):
+                            n.use_custom_color = True
+                        n.color = palcol
+
+        #palette sync operator for specific node
+        for n in [n for n in ng.nodes if ('NodeBoosterColorPalette' in n.bl_idname)]:
+            n.sync_palette_to_outputs()
+
         return {'FINISHED'}
 
 
@@ -113,7 +119,7 @@ class NODEBOOSTER_OT_palette_reset_color(bpy.types.Operator, ):
         return {'FINISHED'}
 
 
-def initialize_palette():
+def initialize_palette(palette_name:str="MyPalette"):
     """create a new palette data with new colors"""
 
     colors = [
@@ -239,19 +245,16 @@ def initialize_palette():
         (0.0, 0.0, 0.49803924560546875),
     ]
 
-    pal = bpy.data.palettes.get(".NodeBoosterPalette")
-    if pal is None:
-        pal = bpy.data.palettes.new(".NodeBoosterPalette")
+    pal = bpy.data.palettes.get(palette_name)
+    if (pal is None):
+        pal = bpy.data.palettes.new(palette_name)
 
         for col in colors:
             palcol = pal.colors.new()
             palcol.color = col
             palcol.weight = 1.0
-
-    ts = bpy.context.tool_settings
-    ts.image_paint.palette = pal
     
-    return None
+    return pal
 
 
 class NODEBOOSTER_OT_initalize_palette(bpy.types.Operator, ):
@@ -260,11 +263,24 @@ class NODEBOOSTER_OT_initalize_palette(bpy.types.Operator, ):
     bl_label = "Create Palette"
     bl_description = "Create Palette"
 
+    palette_name : bpy.props.StringProperty(default="MyPalette", options={'SKIP_SAVE'},)
+    set_node_prop : bpy.props.StringProperty(default="", options={'SKIP_SAVE'},)
+    set_scn_prop : bpy.props.StringProperty(default="", options={'SKIP_SAVE'},)
 
     @classmethod
     def poll(cls, context):
         return (context.space_data.type=='NODE_EDITOR') and (context.space_data.node_tree is not None)
 
     def execute(self, context,):
-        initialize_palette()
+        pal = initialize_palette(palette_name=self.palette_name)
+        #set a scene property on creation..
+        if (self.set_scn_prop):
+            setattr(context.scene.nodebooster, self.set_scn_prop, pal)
+        #option to set a node property on creation..
+        if (self.set_node_prop):
+            ng, ndname = self.set_node_prop.split('_#_')
+            ng = bpy.data.node_groups.get(ng)
+            nd = ng.nodes.get(ndname)
+            nd.palette_ptr = pal
+
         return {'FINISHED'}

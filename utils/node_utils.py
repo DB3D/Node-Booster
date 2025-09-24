@@ -868,7 +868,7 @@ def get_farest_node(node_tree, mode='BOTTOM_RIGHT',):
 #  888    .88P 888   888 888   888 o.  )88b   888 . 888    .o  888      8       `888  888   888 888   888  888    .o o.  )88b 
 # o888bood8P'  `Y8bod8P' `Y8bod8P' 8""888P'   "888" `Y8bod8P' d888b    o8o        `8  `Y8bod8P' `Y8bod88P" `Y8bod8P' 8""888P' 
 
-#NOTE: it is a very common operation to find back all booster nodes, scatered in many different nodetrees.
+#NOTE: it is a very common operation to find back all booster nodes, scattered in many different nodetrees.
 # this action is often executed, we need a system to quickly find back the created booster nodes.
 # to resolve this we store all nodes parent nodetrees.session_uid in a global here.
 #NOTE: storing node object directly in a global is a bad idea, as blender python object might change memory adress within session, 
