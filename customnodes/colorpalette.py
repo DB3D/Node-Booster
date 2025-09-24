@@ -115,15 +115,6 @@ class Base():
         update=update_colors,
         )
 
-    # deprecated: palette_pointer_name (use palette_ptr instead)
-
-    # Alias used by the operator to assign the created palette name
-    palette_name : bpy.props.StringProperty(
-        default="",
-        options={'SKIP_SAVE'},
-        # kept for operator wiring; not used otherwise
-        )
-
     @classmethod
     def poll(cls, context):
         """mandatory poll"""
@@ -151,7 +142,7 @@ class Base():
         ng = ng.copy() #always using a copy of the original ng
         self.node_tree = ng
 
-        # initialize value to current palette (or black)
+        # assign black defaults..
         self.color_active, self.color_after1, self.color_after2, self.color_after3, self.color_after4, self.color_after5 = self.get_active_palette_colors()
 
         self.width = 190
@@ -187,7 +178,7 @@ class Base():
             active_idx = 0
             active_color = None
             for i, color in enumerate(colors):
-                if color == colors.active:
+                if (color == colors.active):
                     active_idx = i
                     active_color = color
                     break
@@ -231,19 +222,10 @@ class Base():
     def draw_buttons(self, context, layout,):
         """node interface drawing"""
 
-        # Palette pointer row (always visible)
         row = layout.row(align=True)
-        row.prop(self, "palette_ptr", text="")
+        row.context_pointer_set("node_context", self)
+        row.template_ID(self, "palette_ptr", new="nodebooster.initalize_palette")
 
-        is_valid = bool(self.palette_ptr)
-        if (not is_valid):
-            op = row.operator("nodebooster.initalize_palette", text="", icon="ADD")
-            op.palette_name = self.name
-            op.set_node_prop = f"{self.id_data.name}_#_{self.name}"
-
-        # Show Blender palette template from the pointer directly
-        layout.template_palette(self, "palette_ptr", color=True)
-        
         row = layout.row(align=True)
         addend = '_viewer' if self.gamma_correction else ''
         row.prop(self, f"color_active{addend}", text="")
@@ -256,6 +238,8 @@ class Base():
         row = layout.row(align=True)
         row.prop(self, "gamma_correction",)
 
+        layout.template_palette(self, "palette_ptr",)
+
         return None
 
     def draw_panel(self, layout, context):
@@ -265,15 +249,8 @@ class Base():
         header.label(text="Palette",)
         if (panel):
             row = panel.row(align=True)
-            row.prop(self, "palette_ptr", text="")
-
-            is_valid = bool(self.palette_ptr)
-            if (not is_valid):
-                op = row.operator("nodebooster.initalize_palette", text="", icon="ADD")
-                op.palette_name = self.name
-                op.set_node_prop = f"{self.id_data.name}_#_{self.name}"
-            # Always show Blender palette template below, using the pointer
-            panel.template_palette(self, "palette_ptr", color=True)
+            row.context_pointer_set("node_context", self)
+            row.template_ID(self, "palette_ptr", new="nodebooster.initalize_palette")
 
             row = layout.row(align=True)
             addend = '_viewer' if self.gamma_correction else ''
@@ -286,6 +263,8 @@ class Base():
             
             row = layout.row(align=True)
             row.prop(self, "gamma_correction",)
+
+            panel.template_palette(self, "palette_ptr", color=True)
         
         return None
 
