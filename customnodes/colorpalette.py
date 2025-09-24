@@ -62,7 +62,7 @@ class Base():
         update=update_colors,
         )
     color_active_viewer : bpy.props.FloatVectorProperty(
-        subtype='COLOR_GAMMA', size=4, get=lambda s: s.color_active, set=lambda s,v: setattr(s, 'color_active', v),)
+        subtype='COLOR_GAMMA', size=4, min=0, max=1, get=lambda s: s.color_active, set=lambda s,v: setattr(s, 'color_active', v),)
     color_after1 : bpy.props.FloatVectorProperty(
         subtype='COLOR',
         default=(0,0,0,0),
@@ -71,7 +71,7 @@ class Base():
         update=update_colors,
         )
     color_after1_viewer : bpy.props.FloatVectorProperty(
-        subtype='COLOR_GAMMA', size=4, get=lambda s: s.color_after1, set=lambda s,v: setattr(s, 'color_after1', v),)
+        subtype='COLOR_GAMMA', size=4, min=0, max=1, get=lambda s: s.color_after1, set=lambda s,v: setattr(s, 'color_after1', v),)
     color_after2 : bpy.props.FloatVectorProperty(
         subtype='COLOR',
         default=(0,0,0,0),
@@ -80,7 +80,7 @@ class Base():
         update=update_colors,
         )
     color_after2_viewer : bpy.props.FloatVectorProperty(
-        subtype='COLOR_GAMMA', size=4, get=lambda s: s.color_after2, set=lambda s,v: setattr(s, 'color_after2', v),)
+        subtype='COLOR_GAMMA', size=4, min=0, max=1, get=lambda s: s.color_after2, set=lambda s,v: setattr(s, 'color_after2', v),)
     color_after3 : bpy.props.FloatVectorProperty(
         subtype='COLOR',
         default=(0,0,0,0),
@@ -89,7 +89,7 @@ class Base():
         update=update_colors,
         )
     color_after3_viewer : bpy.props.FloatVectorProperty(
-        subtype='COLOR_GAMMA', size=4, get=lambda s: s.color_after3, set=lambda s,v: setattr(s, 'color_after3', v),)
+        subtype='COLOR_GAMMA', size=4, min=0, max=1, get=lambda s: s.color_after3, set=lambda s,v: setattr(s, 'color_after3', v),)
     color_after4 : bpy.props.FloatVectorProperty(
         subtype='COLOR',
         default=(0,0,0,0),
@@ -98,7 +98,7 @@ class Base():
         update=update_colors,
         )
     color_after4_viewer : bpy.props.FloatVectorProperty(
-        subtype='COLOR_GAMMA', size=4, get=lambda s: s.color_after4, set=lambda s,v: setattr(s, 'color_after4', v),)
+        subtype='COLOR_GAMMA', size=4, min=0, max=1, get=lambda s: s.color_after4, set=lambda s,v: setattr(s, 'color_after4', v),)
     color_after5 : bpy.props.FloatVectorProperty(
         subtype='COLOR',
         default=(0,0,0,0),
@@ -107,7 +107,7 @@ class Base():
         update=update_colors,
         )
     color_after5_viewer : bpy.props.FloatVectorProperty(
-        subtype='COLOR_GAMMA', size=4, get=lambda s: s.color_after5, set=lambda s,v: setattr(s, 'color_after5', v),)
+        subtype='COLOR_GAMMA', size=4, min=0, max=1, get=lambda s: s.color_after5, set=lambda s,v: setattr(s, 'color_after5', v),)
     gamma_correction : bpy.props.BoolProperty(
         default=True,
         name="Gamma Correction",
