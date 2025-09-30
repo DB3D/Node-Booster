@@ -316,7 +316,7 @@ class NODEBOOSTER_PR_scene(bpy.types.PropertyGroup):
         size=4,
         )
     minimap_view_outline_width : bpy.props.FloatProperty(
-        default=4.0,
+        default=1.0,
         name="Outline Width",
         min=0,
         )

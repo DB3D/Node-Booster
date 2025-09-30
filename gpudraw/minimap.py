@@ -334,23 +334,49 @@ def draw_circle(center_pos, radius, color, segments=16):
 
 
 # --- Custom Shaders ---
-vertex_shader = """
-    uniform mat4 ModelViewProjectionMatrix;
-    in vec2 pos;
-    in vec4 color;
-    out vec4 fragColor;
 
+# Global shader instance
+
+def get_batch_shader():
+    """Gets or creates the custom batch shader using modern GPU shader API."""
+    
+    _f = get_batch_shader
+    if hasattr(_f, 'custom_shader'):
+        return _f.custom_shader
+
+    # Create shader info
+    shader_info = gpu.types.GPUShaderCreateInfo()
+    
+    # Define vertex inputs
+    shader_info.vertex_in(0, 'VEC2', 'pos')
+    shader_info.vertex_in(1, 'VEC4', 'color')
+    
+    # Push constant for viewport (x, y, width, height) to map screen -> clip
+    shader_info.push_constant('VEC4', 'viewport')
+    
+    # Define interface for vertex output -> fragment input
+    interface = gpu.types.GPUStageInterfaceInfo("minimap_interface")
+    interface.smooth('VEC4', 'fragColor')   
+    shader_info.vertex_out(interface)
+    
+    # Define fragment output
+    shader_info.fragment_out(0, 'VEC4', 'outColor')
+    
+    # Set vertex shader source
+    vertex_source = """
     void main()
     {
-        gl_Position = ModelViewProjectionMatrix * vec4(pos.xy, 0.0f, 1.0f);
+        // Map screen-space position (pixels) to NDC using viewport
+        // viewport = vec4(x, y, width, height)
+        vec2 ndc = ((pos - viewport.xy) / viewport.zw) * 2.0 - 1.0;
+        gl_Position = vec4(ndc, 0.0, 1.0);
         fragColor = color;
     }
-"""
-
-fragment_shader = """
-    in vec4 fragColor; // Receive color from vertex shader
-    out vec4 outColor;
-
+    """
+    shader_info.vertex_source(vertex_source)
+    
+    # Set fragment shader source  
+    fragment_source = """
     // Function to convert sRGB color component to linear
     float srgb_to_linear(float c) {
         if (c < 0.04045) {
@@ -364,22 +390,19 @@ fragment_shader = """
     {
         // Convert incoming sRGB color to linear space
         vec3 linear_rgb = vec3(srgb_to_linear(fragColor.r),
-                               srgb_to_linear(fragColor.g),
-                               srgb_to_linear(fragColor.b));
+                                srgb_to_linear(fragColor.g),
+                                srgb_to_linear(fragColor.b));
 
         // Output the linear color, preserving original alpha
         outColor = vec4(linear_rgb, fragColor.a);
     }
-"""
+    """
+    shader_info.fragment_source(fragment_source)
+    
+    # Create the shader
+    _f.custom_shader = gpu.shader.create_from_info(shader_info)
 
-# Global shader instance
-_shader = None
-def get_batch_shader():
-    """Gets or creates the custom batch shader."""
-    global _shader
-    if _shader is None:
-        _shader = gpu.types.GPUShader(vertex_shader, fragment_shader)
-    return _shader
+    return _f.custom_shader
 
 def draw_batched_nodes_and_frames(items_to_draw):
     """
@@ -463,6 +486,9 @@ def draw_batched_nodes_and_frames(items_to_draw):
     original_line_width = gpu.state.line_width_get()
     gpu.state.blend_set('ALPHA')
     shader.bind() # Bind shader once for all batches using it
+    # Update viewport push constant (x, y, width, height)
+    vx, vy, vw, vh = gpu.state.viewport_get()
+    shader.uniform_float("viewport", (float(vx), float(vy), float(vw), float(vh)))
 
     # Draw Fills + Headers Batch
     if tris_verts:
